@@ -89,6 +89,31 @@
             border-color: #c9a227;
             font-weight: 600;
         }
+        .photo-mode {
+            margin: 18px auto 4px;
+            padding-top: 14px;
+            border-top: 1px solid #d8d2c4;
+            max-width: 520px;
+        }
+        .photo-btn {
+            display: inline-block;
+            padding: 11px 22px;
+            background: #c9a227;
+            color: #1a1a1a;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            transition: all 0.15s;
+        }
+        .photo-btn:hover {
+            background: #b8911f;
+        }
+        .photo-note {
+            color: #6b6b6b;
+            font-size: 0.82rem;
+            margin: 8px 0 0;
+        }
     </style>
 </head>
 <body>
@@ -110,6 +135,13 @@
         <button id="btn-green">T-shirt vert</button>
         <button id="btn-vetement2">Vêtement 2</button>
         <button id="btn-none">Aucun</button>
+    </div>
+
+    <div class="photo-mode">
+        <a href="https://kwai-kolors-kolors-virtual-try-on.hf.space" target="_blank" rel="noopener" class="photo-btn">
+            Essayage Photo HD — ultra-réaliste &rarr;
+        </a>
+        <p class="photo-note">S'ouvre dans un nouvel onglet. Téléverse une photo de toi + une photo de vêtement pour un rendu photo-réaliste.</p>
     </div>
 
     <script type="module">
