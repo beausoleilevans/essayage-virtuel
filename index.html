@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Essayage Virtuel</title>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(160deg, #15151c 0%, #1f1f2e 100%);
+            color: #e8e8ee;
+            min-height: 100vh;
+            text-align: center;
+        }
+        header {
+            padding: 32px 20px 6px;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2.4rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #00d9ff, #2dd4bf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle {
+            margin: 8px 0 0;
+            color: #9a9ab0;
+            font-size: 1.05rem;
+        }
+        main {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 16px 20px;
+        }
+        .instructions {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin: 20px auto;
+            max-width: 480px;
+            text-align: left;
+        }
+        .instructions h2 {
+            margin: 0 0 8px;
+            font-size: 1.1rem;
+            color: #00d9ff;
+        }
+        .instructions ol {
+            margin: 0;
+            padding-left: 20px;
+            color: #c5c5d2;
+            line-height: 1.7;
+        }
+        .webcam-container {
+            position: relative;
+            display: inline-block;
+            border: 2px solid #00d9ff;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 10px;
+            background-color: #000;
+            max-width: 100%;
+            box-shadow: 0 0 30px rgba(0, 217, 255, 0.2);
+        }
+        video {
+            display: block;
+            width: 640px;
+            max-width: 100%;
+            transform: scaleX(-1);
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: scaleX(-1);
+            pointer-events: none;
+        }
+        #message {
+            color: #9a9ab0;
+            margin: 14px 0;
+            font-size: 0.95rem;
+            min-height: 1.2em;
+        }
+        .controls {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 10px auto;
+            max-width: 580px;
+        }
+        .menu {
+            margin: 10px 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .menu-label {
+            font-weight: 600;
+            color: #9a9ab0;
+            min-width: 90px;
+            text-align: right;
+        }
+        .menu button {
+            padding: 9px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.06);
+            color: #e8e8ee;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+        .menu button:hover {
+            background: rgba(255, 255, 255, 0.14);
+        }
+        .menu button.active {
+            background: linear-gradient(90deg, #00d9ff, #2dd4bf);
+            color: #15151c;
+            border-color: transparent;
+            font-weight: 600;
+        }
+        footer {
+            padding: 24px 20px 40px;
+            color: #6a6a80;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        footer a {
+            color: #9a9ab0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Essayage Virtuel</h1>
+        <p class="subtitle">Essaie des accessoires et vêtements en direct avec ta webcam</p>
+    </header>
+
+    <main>
+        <div class="instructions">
+            <h2>Comment utiliser</h2>
+            <ol>
+                <li>Autorise l'accès à la caméra quand le navigateur le demande.</li>
+                <li>Recule un peu pour que ton buste (épaules et hanches) soit visible.</li>
+                <li>Choisis tes accessoires et vêtements avec les boutons plus bas.</li>
+                <li>Tourne-toi, penche-toi : tout suit tes mouvements en 3D !</li>
+            </ol>
+        </div>
+
+        <div class="webcam-container">
+            <video id="webcam" autoplay playsinline muted></video>
+            <canvas id="overlay"></canvas>
+        </div>
+
+        <p id="message">Chargement…</p>
+
+        <div class="controls">
+            <div class="menu">
+                <span class="menu-label">Accessoire</span>
+                <button id="btn-glasses" class="active">Lunettes</button>
+            </div>
+            <div class="menu">
+                <span class="menu-label">Vêtement</span>
+                <button id="btn-red" class="active">T-shirt rouge</button>
+                <button id="btn-blue">T-shirt bleu</button>
+                <button id="btn-green">T-shirt vert</button>
+                <button id="btn-vetement2">Vêtement 2</button>
+                <button id="btn-none">Aucun</button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Réalisé avec MediaPipe (Google) et Three.js · Modèle « Vêtement 2 » par ShoyoX (licence Creative Commons) · Démo personnelle</p>
+    </footer>
+
+    <script type="module">
+        import { FaceLandmarker, PoseLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/+esm";
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('overlay');
+        const message = document.getElementById('message');
+        const btnGlasses = document.getElementById('btn-glasses');
+        const clothingButtons = {
+            red: document.getElementById('btn-red'),
+            blue: document.getElementById('btn-blue'),
+            green: document.getElementById('btn-green'),
+            vetement2: document.getElementById('btn-vetement2'),
+            none: document.getElementById('btn-none')
+        };
+
+        let faceLandmarker, poseLandmarker;
+        let renderer, scene, camera, glasses, leftArmPart, rightArmPart;
+        let tshirt = null, tshirtModelHeight = 1;
+        let vetement2 = null, vetement2ModelHeight = 1;
+        let lastVideoTime = -1;
+        let glassesOn = true;
+        let currentClothing = 'red';
+
+        const CAM_FOV = 63;
+        const CLOTHING_COLORS = { red: 0xcc2233, blue: 0x2244cc, green: 0x22aa44 };
+        const TSHIRT_SCALE = 1.35;
+        const VETEMENT2_SCALE = 1.35;
+
+        btnGlasses.addEventListener('click', () => {
+            glassesOn = !glassesOn;
+            btnGlasses.classList.toggle('active', glassesOn);
+        });
+        for (const [name, btn] of Object.entries(clothingButtons)) {
+            btn.addEventListener('click', () => selectClothing(name));
+        }
+
+        function selectClothing(name) {
+            currentClothing = name;
+            for (const [n, btn] of Object.entries(clothingButtons)) {
+                btn.classList.toggle('active', n === name);
+            }
+            if (CLOTHING_COLORS[name] !== undefined) {
+                setTshirtColor(CLOTHING_COLORS[name]);
+            }
+        }
+
+        function setTshirtColor(hex) {
+            if (!tshirt) return;
+            tshirt.traverse((child) => {
+                if (child.isMesh && child.material) {
+                    const mats = Array.isArray(child.material) ? child.material : [child.material];
+                    mats.forEach(m => { if (m.color) m.color.setHex(hex); });
+                }
+            });
+        }
+
+        async function init() {
+            try {
+                message.textContent = 'Chargement du détecteur de visage…';
+                const filesetResolver = await FilesetResolver.forVisionTasks(
+                    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm"
+                );
+                faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
+                    baseOptions: {
+                        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+                        delegate: "GPU"
+                    },
+                    runningMode: "VIDEO",
+                    numFaces: 1,
+                    outputFacialTransformationMatrixes: true
+                });
+
+                message.textContent = 'Chargement du détecteur de corps…';
+                poseLandmarker = await PoseLandmarker.createFromOptions(filesetResolver, {
+                    baseOptions: {
+                        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+                        delegate: "GPU"
+                    },
+                    runningMode: "VIDEO",
+                    numPoses: 1
+                });
+
+                message.textContent = 'Détecteurs prêts. Démarrage de la caméra…';
+
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                video.srcObject = stream;
+
+                await new Promise(resolve => {
+                    video.addEventListener('loadeddata', resolve, { once: true });
+                });
+
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                setupThreeJS();
+                loadGarments();
+                message.textContent = 'Choisis tes lunettes et ton vêtement avec les menus.';
+                animate();
+            } catch (err) {
+                message.textContent = 'Erreur : ' + err.message;
+                message.style.color = '#ff6b6b';
+            }
+        }
+
+        function setupThreeJS() {
+            renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.setSize(canvas.width, canvas.height, false);
+
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(CAM_FOV, canvas.width / canvas.height, 1, 1000);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
+            dirLight.position.set(0.3, 1, 1);
+            scene.add(dirLight);
+
+            glasses = createGlasses();
+            glasses.matrixAutoUpdate = false;
+            glasses.visible = false;
+            scene.add(glasses);
+        }
+
+        function loadGarments() {
+            const loader = new GLTFLoader();
+
+            loader.load('tshirt.glb', (gltf) => {
+                const model = gltf.scene;
+                const box = new THREE.Box3().setFromObject(model);
+                const size = new THREE.Vector3();
+                box.getSize(size);
+                const center = new THREE.Vector3();
+                box.getCenter(center);
+                model.position.sub(center);
+                tshirtModelHeight = size.y || 1;
+
+                tshirt = new THREE.Group();
+                tshirt.add(model);
+                tshirt.visible = false;
+                scene.add(tshirt);
+                setTshirtColor(CLOTHING_COLORS[currentClothing] ?? 0xcc2233);
+            }, undefined, (error) => {
+                message.textContent = 'Erreur chargement tshirt.glb : ' + error.message;
+                message.style.color = '#ff6b6b';
+            });
+
+            loader.load('vetement2.glb', (gltf) => {
+                const model = gltf.scene;
+                model.rotation.y = Math.PI;
+                model.updateMatrixWorld(true);
+                const box = new THREE.Box3().setFromObject(model);
+                const size = new THREE.Vector3();
+                box.getSize(size);
+                const center = new THREE.Vector3();
+                box.getCenter(center);
+                model.position.sub(center);
+                vetement2ModelHeight = size.y || 1;
+
+                vetement2 = new THREE.Group();
+                vetement2.add(model);
+                vetement2.visible = false;
+                scene.add(vetement2);
+            }, undefined, (error) => {
+                message.textContent = 'Erreur chargement vetement2.glb : ' + error.message;
+                message.style.color = '#ff6b6b';
+            });
+        }
+
+        function createGlasses() {
+            const group = new THREE.Group();
+            leftArmPart = new THREE.Group();
+            rightArmPart = new THREE.Group();
+            group.add(leftArmPart);
+            group.add(rightArmPart);
+
+            const frameMaterial = new THREE.MeshStandardMaterial({
+                color: 0x222222, metalness: 0.3, roughness: 0.4
+            });
+            const lensMaterial = new THREE.MeshStandardMaterial({
+                color: 0x111122, transparent: true, opacity: 0.7, side: THREE.DoubleSide
+            });
+
+            const eyeX = 3.2;
+            const eyeY = 3;
+            const eyeZ = 4;
+            const lensR = 2.0;
+            const frameT = 0.16;
+            const armLen = 22;
+
+            const lensGeom = new THREE.TorusGeometry(lensR, frameT, 8, 24);
+            const leftFrame = new THREE.Mesh(lensGeom, frameMaterial);
+            leftFrame.position.set(-eyeX, eyeY, eyeZ);
+            group.add(leftFrame);
+            const rightFrame = new THREE.Mesh(lensGeom, frameMaterial);
+            rightFrame.position.set(eyeX, eyeY, eyeZ);
+            group.add(rightFrame);
+
+            const glassGeom = new THREE.CircleGeometry(lensR * 0.95, 24);
+            const leftGlass = new THREE.Mesh(glassGeom, lensMaterial);
+            leftGlass.position.set(-eyeX, eyeY, eyeZ);
+            group.add(leftGlass);
+            const rightGlass = new THREE.Mesh(glassGeom, lensMaterial);
+            rightGlass.position.set(eyeX, eyeY, eyeZ);
+            group.add(rightGlass);
+
+            const bridgeLen = 2 * eyeX - 2 * lensR;
+            const bridgeGeom = new THREE.CylinderGeometry(frameT, frameT, bridgeLen, 8);
+            const bridge = new THREE.Mesh(bridgeGeom, frameMaterial);
+            bridge.position.set(0, eyeY, eyeZ);
+            bridge.rotation.z = Math.PI / 2;
+            group.add(bridge);
+
+            const armGeom = new THREE.CylinderGeometry(frameT, frameT, armLen, 8);
+            const leftArm = new THREE.Mesh(armGeom, frameMaterial);
+            leftArm.position.set(-(eyeX + lensR), eyeY, eyeZ - armLen / 2);
+            leftArm.rotation.x = Math.PI / 2;
+            leftArmPart.add(leftArm);
+            const rightArm = new THREE.Mesh(armGeom, frameMaterial);
+            rightArm.position.set(eyeX + lensR, eyeY, eyeZ - armLen / 2);
+            rightArm.rotation.x = Math.PI / 2;
+            rightArmPart.add(rightArm);
+
+            const tipGeom = new THREE.SphereGeometry(frameT * 2.5, 12, 12);
+            const leftTip = new THREE.Mesh(tipGeom, frameMaterial);
+            leftTip.position.set(-(eyeX + lensR), eyeY - 0.3, eyeZ - armLen);
+            leftArmPart.add(leftTip);
+            const rightTip = new THREE.Mesh(tipGeom, frameMaterial);
+            rightTip.position.set(eyeX + lensR, eyeY - 0.3, eyeZ - armLen);
+            rightArmPart.add(rightTip);
+
+            leftArmPart.visible = false;
+            rightArmPart.visible = false;
+
+            return group;
+        }
+
+        function unproject(nx, ny, depth) {
+            const fovRad = CAM_FOV * Math.PI / 180;
+            const halfHeight = depth * Math.tan(fovRad / 2);
+            const halfWidth = halfHeight * (canvas.width / canvas.height);
+            const ndcX = nx * 2 - 1;
+            const ndcY = -(ny * 2 - 1);
+            return new THREE.Vector3(ndcX * halfWidth, ndcY * halfHeight, -depth);
+        }
+
+        function updateGarment(result) {
+            if (tshirt) tshirt.visible = false;
+            if (vetement2) vetement2.visible = false;
+
+            let group, modelHeight, scaleFactor, yOffsetFactor;
+            if (currentClothing === 'vetement2') {
+                group = vetement2; modelHeight = vetement2ModelHeight; scaleFactor = VETEMENT2_SCALE; yOffsetFactor = 0.2;
+            } else if (CLOTHING_COLORS[currentClothing] !== undefined) {
+                group = tshirt; modelHeight = tshirtModelHeight; scaleFactor = TSHIRT_SCALE; yOffsetFactor = 0;
+            } else {
+                return;
+            }
+            if (!group) return;
+
+            if (!result.landmarks || result.landmarks.length === 0 ||
+                !result.worldLandmarks || result.worldLandmarks.length === 0) return;
+
+            const lm = result.landmarks[0];
+            const ls = lm[11], rs = lm[12], lh = lm[23], rh = lm[24];
+            const minVis = 0.5;
+            if ((ls.visibility ?? 1) < minVis || (rs.visibility ?? 1) < minVis ||
+                (lh.visibility ?? 1) < minVis || (rh.visibility ?? 1) < minVis) return;
+
+            const depth = 50;
+            const ls3 = unproject(ls.x, ls.y, depth);
+            const rs3 = unproject(rs.x, rs.y, depth);
+            const lh3 = unproject(lh.x, lh.y, depth);
+            const rh3 = unproject(rh.x, rh.y, depth);
+
+            const shoulderMid = ls3.clone().add(rs3).multiplyScalar(0.5);
+            const hipMid = lh3.clone().add(rh3).multiplyScalar(0.5);
+            const torsoCenter = shoulderMid.clone().add(hipMid).multiplyScalar(0.5);
+            const torsoLength = shoulderMid.distanceTo(hipMid);
+
+            group.position.copy(torsoCenter);
+            group.position.y += torsoLength * yOffsetFactor;
+            group.scale.setScalar(torsoLength / modelHeight * scaleFactor);
+
+            const wlm = result.worldLandmarks[0];
+            const wls = new THREE.Vector3(wlm[11].x, -wlm[11].y, -wlm[11].z);
+            const wrs = new THREE.Vector3(wlm[12].x, -wlm[12].y, -wlm[12].z);
+            const wlh = new THREE.Vector3(wlm[23].x, -wlm[23].y, -wlm[23].z);
+            const wrh = new THREE.Vector3(wlm[24].x, -wlm[24].y, -wlm[24].z);
+            const wSh = wls.clone().add(wrs).multiplyScalar(0.5);
+            const wHip = wlh.clone().add(wrh).multiplyScalar(0.5);
+
+            const right = wrs.clone().sub(wls).normalize();
+            let up = wSh.clone().sub(wHip).normalize();
+            const forward = new THREE.Vector3().crossVectors(right, up).normalize();
+            up = new THREE.Vector3().crossVectors(forward, right).normalize();
+
+            const rotMatrix = new THREE.Matrix4().makeBasis(right, up, forward);
+            group.quaternion.setFromRotationMatrix(rotMatrix);
+
+            group.visible = true;
+        }
+
+        function animate() {
+            if (video.readyState >= 2 && video.currentTime !== lastVideoTime) {
+                lastVideoTime = video.currentTime;
+                const ts = performance.now();
+
+                const faceResult = faceLandmarker.detectForVideo(video, ts);
+                const poseResult = poseLandmarker.detectForVideo(video, ts);
+
+                if (faceResult.facialTransformationMatrixes && faceResult.facialTransformationMatrixes.length > 0) {
+                    const matrix = new THREE.Matrix4();
+                    matrix.fromArray(faceResult.facialTransformationMatrixes[0].data);
+
+                    glasses.matrix.copy(matrix);
+                    glasses.visible = glassesOn;
+
+                    if (glassesOn) {
+                        const faceXAxisZ = matrix.elements[2];
+                        leftArmPart.visible = (faceXAxisZ < -0.2);
+                        rightArmPart.visible = (faceXAxisZ > 0.2);
+                    }
+                } else {
+                    glasses.visible = false;
+                }
+
+                updateGarment(poseResult);
+            }
+
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+
+        init();
+    </script>
+</body>
+</html>
