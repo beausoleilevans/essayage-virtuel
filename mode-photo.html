@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Essayage Photo HD</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 16px;
+            background: transparent;
+            color: #333;
+            text-align: center;
+        }
+        .hd-header {
+            max-width: 720px;
+            margin: 0 auto 14px;
+        }
+        .hd-header h2 {
+            margin: 0 0 6px;
+            color: #00b8d4;
+            font-size: 1.4rem;
+        }
+        .hd-header p {
+            margin: 4px 0;
+            color: #555;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .hd-steps {
+            display: inline-block;
+            text-align: left;
+            color: #555;
+            font-size: 0.92rem;
+            line-height: 1.7;
+            margin: 4px auto;
+            padding-left: 18px;
+        }
+        .hd-iframe-wrap {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        iframe {
+            width: 100%;
+            height: 920px;
+            border: 2px solid #00b8d4;
+            border-radius: 12px;
+            background: #fff;
+        }
+        .note {
+            max-width: 720px;
+            margin: 12px auto;
+            font-size: 0.82rem;
+            color: #999;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="hd-header">
+        <h2>Essayage Photo HD — Aperçu ultra-réaliste</h2>
+        <p>Pour un rendu photo-réaliste, suis ces 3 étapes dans l'outil ci-dessous :</p>
+        <ol class="hd-steps">
+            <li>Téléverse une <strong>photo de toi</strong> (buste ou corps entier, bien éclairé, face caméra).</li>
+            <li>Téléverse une <strong>photo du vêtement</strong> (photo produit, à plat ou sur fond simple).</li>
+            <li>Clique sur le bouton de génération et patiente (30 s à 2 min selon l'affluence).</li>
+        </ol>
+    </div>
+
+    <div class="hd-iframe-wrap">
+        <iframe
+            src="https://kwai-kolors-kolors-virtual-try-on.hf.space"
+            title="Essayage photo réaliste"
+            allow="camera">
+        </iframe>
+    </div>
+
+    <p class="note">
+        Aperçu photo propulsé par « Kolors Virtual Try-On » (Hugging Face), un outil gratuit et partagé.
+        Une file d'attente est possible aux heures de pointe. Pour un essayage instantané et illimité,
+        utilise le mode webcam en direct.
+    </p>
+</body>
+</html>
